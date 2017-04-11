@@ -3,6 +3,7 @@ package listenserver
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -97,23 +98,30 @@ func handleConnection(delegator handler.PacketHandler, conn net.Conn, connection
 		// Read the incoming connection into the buffer.
 		n, err := conn.Read(temp)
 		if err != nil {
-			log.Printf("Closing Error reading: %s", err)
+			log.Printf("%s Error reading: '%s'. Closing...", connectionIdentity, err)
+			delegator.HandleTransportDisconnect()
 			return
 		}
 		data := temp[:n]
 
-		// hexPayload := hex.Dump(data)
-		// log.Printf("Received: %s", hexPayload)
-
+		if false {
+			hexPayload := hex.Dump(data)
+			log.Printf("%s TransportReceived: %s", connectionIdentity, hexPayload)
+		}
 		stream.Feed(data)
 		newPacket, fetchErr := stream.FetchPacket()
 		if fetchErr != nil {
-			// log.Printf("Fetcherror:%s\n", fetchErr)
+			_, isNotDoneError := fetchErr.(*packet.PacketNotDoneError)
+			if isNotDoneError {
+			} else {
+				log.Printf("Fetcherror:%s", fetchErr)
+			}
 		} else {
 			if newPacket.Payload() != nil {
 				err := packetdeserializers.Deserialize(newPacket, delegator)
 				if err != nil {
 					log.Printf("Deserialize error:%s", err)
+					return
 				}
 			}
 		}
