@@ -46,7 +46,7 @@ func setupCert(cfg *tls.Config, cert string, certPrivateKey string) error {
 
 func (in *Server) Listen(listenerHandler Listener, host string, cert string, certPrivateKey string) error { // Listen for incoming connections.
 
-	log.Infof("Listening to", host)
+	log.Infof("Listening to '%s'", host)
 	config := new(tls.Config)
 	certErr := setupCert(config, cert, certPrivateKey)
 	if certErr != nil {
